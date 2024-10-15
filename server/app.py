@@ -10,16 +10,18 @@ import os
 import base64  # Import base64 for encoding
 
 load_dotenv()
+HOSTNAME = 'http://localhost:5174'
 
 # Flask app setup
 app = Flask(__name__)
-CORS(app, supports_credentials=True, origins=["http://localhost:5174"])  # Enable CORS for specific origin with credentials
+CORS(app, supports_credentials=True, origins=[HOSTNAME])  # Enable CORS for specific origin with credentials
 
 # Set your Notion and OpenAI credentials from environment variables
 REDIRECT_URI = os.getenv('REDIRECT_URI')
 NOTION_CLIENT_ID = os.getenv('NOTION_CLIENT_ID')
 NOTION_CLIENT_SECRET = os.getenv('NOTION_CLIENT_SECRET')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+
 
 # Validate environment variables
 missing_vars = []
@@ -239,7 +241,7 @@ def notion_callback():
     
     if not notion_code:
         print("No code provided in the request.")
-        return redirect('http://localhost:5174/?auth=error&message=No+code+provided')
+        return redirect(f'{HOSTNAME}/?auth=error&message=No+code+provided')
     
     # Exchange the code for an access token
     token_url = 'https://api.notion.com/v1/oauth/token'
@@ -269,10 +271,10 @@ def notion_callback():
         if access_token:
             print("Access token retrieved successfully.")
             # Redirect to frontend with access_token included in the URL
-            return redirect(f'http://localhost:5174/?auth=success&token={access_token}')
+            return redirect(f'{HOSTNAME}/?auth=success&token={access_token}')
         else:
             print("Access token not found in the response.")
-            return redirect('http://localhost:5174/?auth=error&message=Access+token+not+found')
+            return redirect(f'{HOSTNAME}/?auth=error&message=Access+token+not+found')
     else:
         # Handle cases where the response might not be JSON
         try:
@@ -285,13 +287,12 @@ def notion_callback():
         
         print(f"Failed to retrieve access token: {error_message} - {error_description}")
         # Redirect to frontend with error details
-        return redirect(f'http://localhost:5174/?auth=error&message={error_message.replace(" ", "+")}&details={error_description.replace(" ", "+")}')
+        return redirect(f'{HOSTNAME}/?auth=error&message={error_message.replace(" ", "+")}&details={error_description.replace(" ", "+")}')
 
 # Optional: Endpoint to check backend status
 @app.route('/status', methods=['GET'])
 def status():
     return jsonify({"message": "Backend is running"}), 200
 
-# Run the Flask app
 if __name__ == "__main__":
-    app.run(debug=True, port=5001)  # Ensure this port matches your frontend configuration
+    app.run(host='0.0.0.0')
