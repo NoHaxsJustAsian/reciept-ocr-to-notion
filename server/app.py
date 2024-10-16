@@ -18,7 +18,7 @@ NOTION_CLIENT_SECRET = os.getenv('NOTION_CLIENT_SECRET')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True, origins=[HOSTNAME]) 
+CORS(app, supports_credentials=True, origins=["https://recieptocr.com", "https://www.recieptocr.com"]) 
 
 # Validate environment variables
 missing_vars = []
