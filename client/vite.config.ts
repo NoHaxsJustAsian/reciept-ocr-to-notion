@@ -4,7 +4,7 @@ import { defineConfig } from "vite"
  
 export default defineConfig({
   plugins: [react()],
-  base: "/reciept-ocr-to-notion/",
+  base: "/",
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
