@@ -4,14 +4,24 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {CheckIcon, Cross2Icon, ImageIcon, UploadIcon, CalendarIcon } from "@radix-ui/react-icons";
+import {
+  CheckIcon,
+  Cross2Icon,
+  ImageIcon,
+  UploadIcon,
+  CalendarIcon,
+} from "@radix-ui/react-icons";
 import { Loader2 } from "lucide-react";
 import { ThemeProvider, useTheme } from "@/components/ui/theme-provider";
 import { ModeToggle } from "@/components/ui/mode-toggle";
 import { Toaster } from "@/components/ui/sonner";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card";
+import {
+  HoverCard,
+  HoverCardTrigger,
+  HoverCardContent,
+} from "@/components/ui/hover-card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 export default function ReceiptOCR() {
@@ -37,7 +47,15 @@ export default function ReceiptOCR() {
         localStorage.setItem("notion_token", token);
         setNotionAuthenticated(true);
         toast.success("Authentication with Notion was successful.", {
-          icon: <img src="/notion.svg" alt="Notion" className={`h-6 w-6 ${theme === 'dark' ? 'notion-icon-dark' : 'notion-icon-light'}`} />,
+          icon: (
+            <img
+              src="/notion.svg"
+              alt="Notion"
+              className={`h-6 w-6 ${
+                theme === "dark" ? "notion-icon-dark" : "notion-icon-light"
+              }`}
+            />
+          ),
         });
       } else {
         toast.error("Authentication succeeded but no token received.", {
@@ -74,14 +92,14 @@ export default function ReceiptOCR() {
 
   const processReceipt = async () => {
     if (!image) return;
-  
+
     setLoading(true);
     const formData = new FormData();
     formData.append("receipt_image", image);
-    formData.append("upload_to_notion", String(uploadToNotion));  // Still include this flag
-  
+    formData.append("upload_to_notion", String(uploadToNotion)); // Still include this flag
+
     const token = localStorage.getItem("notion_token");
-  
+
     try {
       // Process the receipt without requiring Notion authentication
       const response = await fetch(`${FLASK_API_URL}/process_receipt`, {
@@ -94,7 +112,7 @@ export default function ReceiptOCR() {
             : {}),
         },
       });
-  
+
       const data = await response.json();
       if (response.ok) {
         // Always show the OCR result
@@ -102,7 +120,7 @@ export default function ReceiptOCR() {
         toast.success("Receipt processed successfully.", {
           icon: <CheckIcon />,
         });
-  
+
         // Only show Notion upload success message if authenticated and uploading to Notion
         if (uploadToNotion && notionAuthenticated) {
           toast.success("Receipt data uploaded to Notion.", {
@@ -215,9 +233,7 @@ export default function ReceiptOCR() {
             {/* Process Receipt Button */}
             <Button
               onClick={processReceipt}
-              disabled={
-                !image || loading || (uploadToNotion && !notionAuthenticated)
-              }
+              disabled={!image || loading}
               className="w-full"
             >
               {loading ? (
