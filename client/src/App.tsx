@@ -15,7 +15,7 @@ import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/h
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 export default function ReceiptOCR() {
-  const FLASK_API_URL = "https://reciept-ocr-to-notion-backend.onrender.com";
+  const FLASK_API_URL = "https://reciept-ocr-to-notion.onrender.com";
   const [image, setImage] = useState<File | null>(null);
   const [result, setResult] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
