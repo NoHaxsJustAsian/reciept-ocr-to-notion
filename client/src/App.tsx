@@ -15,7 +15,7 @@ import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/h
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 export default function ReceiptOCR() {
-  const FLASK_API_URL = "http://localhost:5001"; // Ensure this matches your Flask backend
+  const FLASK_API_URL = "https://reciept-ocr-to-notion-backend.onrender.com"; // Ensure this matches your Flask backend
   const [image, setImage] = useState<File | null>(null);
   const [result, setResult] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
@@ -125,7 +125,7 @@ export default function ReceiptOCR() {
   };
 
   const handleNotionAuthentication = () => {
-    const notionAuthUrl = `https://api.notion.com/v1/oauth/authorize?client_id=120d872b-594c-8086-a877-003712936b54&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A5001%2Fnotion_callback&owner=user`;
+    const notionAuthUrl = `https://api.notion.com/v1/oauth/authorize?client_id=120d872b-594c-8086-a877-003712936b54&response_type=code&owner=user&redirect_uri=https%3A%2F%2Freciept-ocr-to-notion-backend.onrender.com%2Fnotion_callback`;
     window.location.href = notionAuthUrl;
   };
 
