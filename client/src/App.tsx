@@ -15,14 +15,14 @@ import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/h
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 export default function ReceiptOCR() {
-  const FLASK_API_URL = "https://reciept-ocr-to-notion-backend.onrender.com"; // Ensure this matches your Flask backend
+  const FLASK_API_URL = "https://reciept-ocr-to-notion-backend.onrender.com";
   const [image, setImage] = useState<File | null>(null);
   const [result, setResult] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [uploadToNotion, setUploadToNotion] = useState<boolean>(true);
   const [notionAuthenticated, setNotionAuthenticated] =
     useState<boolean>(false);
-  const { theme } = useTheme(); // Get the current theme
+  const { theme } = useTheme();
 
   // Handle OAuth callback by extracting the 'auth' and 'token' query parameters
   useEffect(() => {
@@ -39,7 +39,6 @@ export default function ReceiptOCR() {
         toast.success("Authentication with Notion was successful.", {
           icon: <img src="/notion.svg" alt="Notion" className={`h-6 w-6 ${theme === 'dark' ? 'notion-icon-dark' : 'notion-icon-light'}`} />,
         });
-        console.log("Token stored in localStorage:", token); // Debugging
       } else {
         toast.error("Authentication succeeded but no token received.", {
           icon: <Cross2Icon />,
@@ -60,7 +59,6 @@ export default function ReceiptOCR() {
       const storedToken = localStorage.getItem("notion_token");
       if (storedToken) {
         setNotionAuthenticated(true);
-        console.log("Token retrieved from localStorage:", storedToken); // Debugging
       }
     }
   }, [theme]);
@@ -83,7 +81,6 @@ export default function ReceiptOCR() {
     formData.append("upload_to_notion", String(uploadToNotion));
 
     const token = localStorage.getItem("notion_token");
-    console.log("Using token for request:", token); // Debugging
 
     try {
       const response = await fetch(`${FLASK_API_URL}/process_receipt`, {

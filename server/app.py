@@ -7,21 +7,18 @@ import requests
 import io
 from dotenv import load_dotenv
 import os
-import base64  # Import base64 for encoding
+import base64 
 
 load_dotenv()
-HOSTNAME = 'http://localhost:5174'
 
-# Flask app setup
-app = Flask(__name__)
-CORS(app, supports_credentials=True, origins=[HOSTNAME])  # Enable CORS for specific origin with credentials
-
-# Set your Notion and OpenAI credentials from environment variables
+HOSTNAME = os.getenv('HOSTNAME')
 REDIRECT_URI = os.getenv('REDIRECT_URI')
 NOTION_CLIENT_ID = os.getenv('NOTION_CLIENT_ID')
 NOTION_CLIENT_SECRET = os.getenv('NOTION_CLIENT_SECRET')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
+app = Flask(__name__)
+CORS(app, supports_credentials=True, origins=[HOSTNAME]) 
 
 # Validate environment variables
 missing_vars = []
@@ -62,7 +59,6 @@ def get_ocr_database_id(access_token):
         results = response.json().get('results', [])
         for result in results:
             title_property = result.get('title', [])
-            # Concatenate all text parts in the title
             title_text = ''.join([t.get('text', {}).get('content', '') for t in title_property])
             if title_text == "OCR":
                 print(f"Found OCR Database: {title_text}")
@@ -73,7 +69,6 @@ def get_ocr_database_id(access_token):
         print(f"Failed to retrieve databases: {response.status_code} - {response.text}")
         return None
 
-# OCR function
 def perform_ocr(image):
     img = Image.open(image)
     text = pytesseract.image_to_string(img)
@@ -140,7 +135,6 @@ def add_item_to_notion(item_name, price, quantity, database_id, access_token):
         print(f"Error: {response.status_code}, {response.text}")
         return False
 
-# API endpoint to process the receipt
 @app.route("/process_receipt", methods=["POST"])
 def process_receipt():
     # Get the 'upload_to_notion' flag
