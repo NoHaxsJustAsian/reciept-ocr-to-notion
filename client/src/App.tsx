@@ -29,7 +29,7 @@ export default function ReceiptOCR() {
   const [image, setImage] = useState<File | null>(null);
   const [result, setResult] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
-  const [uploadToNotion, setUploadToNotion] = useState<boolean>(true);
+  const [uploadToNotion, setUploadToNotion] = useState<boolean>(false);
   const [notionAuthenticated, setNotionAuthenticated] =
     useState<boolean>(false);
   const { theme } = useTheme();
