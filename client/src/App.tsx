@@ -74,34 +74,47 @@ export default function ReceiptOCR() {
 
   const processReceipt = async () => {
     if (!image) return;
-
+  
     setLoading(true);
     const formData = new FormData();
     formData.append("receipt_image", image);
-    formData.append("upload_to_notion", String(uploadToNotion));
-
+    formData.append("upload_to_notion", String(uploadToNotion));  // Still include this flag
+  
     const token = localStorage.getItem("notion_token");
-
+  
     try {
+      // Process the receipt without requiring Notion authentication
       const response = await fetch(`${FLASK_API_URL}/process_receipt`, {
         method: "POST",
         body: formData,
         headers: {
-          // Include the Authorization header only if uploading to Notion
+          // Only include the Authorization header if uploading to Notion and the user is authenticated
           ...(uploadToNotion && notionAuthenticated && token
             ? { Authorization: `Bearer ${token}` }
             : {}),
         },
       });
+  
       const data = await response.json();
       if (response.ok) {
+        // Always show the OCR result
         setResult(JSON.stringify(data.items, null, 2));
         toast.success("Receipt processed successfully.", {
           icon: <CheckIcon />,
         });
+  
+        // Only show Notion upload success message if authenticated and uploading to Notion
         if (uploadToNotion && notionAuthenticated) {
           toast.success("Receipt data uploaded to Notion.", {
-            icon: <img src="/notion.svg" alt="Notion" className={`h-6 w-6 ${theme === 'dark' ? 'notion-icon-dark' : 'notion-icon-light'}`} />,
+            icon: (
+              <img
+                src="/notion.svg"
+                alt="Notion"
+                className={`h-6 w-6 ${
+                  theme === "dark" ? "notion-icon-dark" : "notion-icon-light"
+                }`}
+              />
+            ),
           });
         }
       } else {
