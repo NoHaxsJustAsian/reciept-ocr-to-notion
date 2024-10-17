@@ -1,13 +1,6 @@
 # Use an official Python runtime as a parent image
 FROM python:3.12-slim
 
-# Install Tesseract OCR and other dependencies
-RUN apt-get update && apt-get install -y \
-    tesseract-ocr \
-    libtesseract-dev \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
 # Set the working directory in the container
 WORKDIR /app
 
@@ -16,6 +9,7 @@ COPY . /app
 
 # Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade openai
 
 # Make port 5000 available to the world outside this container
 EXPOSE 5000

@@ -1,6 +1,5 @@
 Flask==3.0.3
 Flask-Cors==5.0.0
-pytesseract==0.3.13
 Pillow==10.4.0
 requests==2.31.0
 python-dotenv==1.0.1

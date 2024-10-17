@@ -3,6 +3,7 @@ from flask_cors import CORS
 from openai import OpenAI
 import requests
 import io
+from PIL import Image
 from dotenv import load_dotenv
 import os
 import base64
@@ -70,6 +71,7 @@ def get_ocr_database_id(access_token):
 def process_image(image):
     try:
             image_bytes = image.read()
+            img_type = Image.open(io.BytesIO(image_bytes)).format.lower()
             encoded_image = base64.b64encode(image_bytes).decode('utf-8')
 
             prompt = f"""
@@ -78,7 +80,6 @@ def process_image(image):
             Extract all text from the following image and format the items as "quantity x item_name - $price":
             [Image Data: {encoded_image}]
             """
-
             response = client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
@@ -88,11 +89,12 @@ def process_image(image):
                             {"type": "text", "text": prompt},
                             {
                                 "type": "image_url",
-                                "image_url": {"url": f"data:image/png;base64,{encoded_image}"},
+                                "image_url": {"url": f"data:image/{img_type};base64,{encoded_image}"},
                             },
                         ],
                     }
                 ],
+                max_tokens=500,
             )
 
             cleaned_items = response['choices'][0]['message']['content'].strip()
