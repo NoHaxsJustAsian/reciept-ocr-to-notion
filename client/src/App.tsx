@@ -223,6 +223,22 @@ export default function ReceiptOCR() {
           )}
           <ModeToggle />
         </div>
+        <div className="flex space-x-4 items-center justify-center mb-4">
+          <img
+            src={'/notion.svg'}
+            alt="Notion"
+            className={`h-12 w-12 md:h-16 md:w-16 ${
+              theme === "dark" ? "notion-icon-dark" : "notion-icon-light"
+            }`}
+          />
+          <img
+            src={'/reciept.svg'}
+            alt="Receipt"
+            className={`h-12 w-12 md:h-16 md:w-16 ${
+              theme === "dark" ? "notion-icon-dark" : "notion-icon-light"
+            }`}
+          />
+        </div>
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle className="text-2xl font-bold text-center">
