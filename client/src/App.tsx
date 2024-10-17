@@ -34,6 +34,11 @@ export default function ReceiptOCR() {
     useState<boolean>(false);
   const { theme } = useTheme();
 
+  // Define maximum limits
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+  const MAX_IMAGE_WIDTH = 2000; // 2000 pixels
+  const MAX_IMAGE_HEIGHT = 2000; // 2000 pixels
+
   // Handle OAuth callback by extracting the 'auth' and 'token' query parameters
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -83,10 +88,48 @@ export default function ReceiptOCR() {
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setImage(e.target.files[0]);
-      toast.success("Image uploaded successfully.", {
-        icon: <ImageIcon />,
-      });
+      const file = e.target.files[0];
+
+      // File Size Validation
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error(
+          `Image is too large. Maximum allowed size is ${
+            MAX_FILE_SIZE / (1024 * 1024)
+          }MB.`,
+          {
+            icon: <Cross2Icon />,
+          }
+        );
+        return; // Exit the function early
+      }
+
+      // Image Dimension Validation
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+      img.onload = () => {
+        if (img.width > MAX_IMAGE_WIDTH || img.height > MAX_IMAGE_HEIGHT) {
+          toast.error(
+            `Image dimensions are too large. Maximum allowed size is ${MAX_IMAGE_WIDTH}x${MAX_IMAGE_HEIGHT} pixels.`,
+            {
+              icon: <Cross2Icon />,
+            }
+          );
+          URL.revokeObjectURL(objectUrl); // Clean up
+          return;
+        } else {
+          setImage(file);
+          toast.success("Image uploaded successfully.", {
+            icon: <ImageIcon />,
+          });
+        }
+      };
+      img.onerror = () => {
+        toast.error("Invalid image file.", {
+          icon: <Cross2Icon />,
+        });
+        URL.revokeObjectURL(objectUrl); // Clean up
+      };
+      img.src = objectUrl;
     }
   };
 

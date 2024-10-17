@@ -1,13 +1,11 @@
-from flask import Flask, request, jsonify, redirect, make_response
+from flask import Flask, request, jsonify, redirect
 from flask_cors import CORS
-from PIL import Image
-import pytesseract
 from openai import OpenAI
 import requests
 import io
 from dotenv import load_dotenv
 import os
-import base64 
+import base64
 
 load_dotenv()
 
@@ -18,7 +16,11 @@ NOTION_CLIENT_SECRET = os.getenv('NOTION_CLIENT_SECRET')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True, origins=[HOSTNAME]) 
+CORS(app, supports_credentials=True, origins=[HOSTNAME])
+
+client = OpenAI(
+    api_key=os.environ.get("OPENAI_API_KEY"),
+)
 
 # Validate environment variables
 missing_vars = []
@@ -34,11 +36,7 @@ if not OPENAI_API_KEY:
 if missing_vars:
     raise ValueError(f"Missing environment variables: {', '.join(missing_vars)}")
 
-client = OpenAI(
-    api_key=os.environ.get("OPENAI_API_KEY"),
-)
 
-# Helper function to retrieve the OCR database from Notion
 def get_ocr_database_id(access_token):
     url = "https://api.notion.com/v1/search"
     headers = {
@@ -69,27 +67,43 @@ def get_ocr_database_id(access_token):
         print(f"Failed to retrieve databases: {response.status_code} - {response.text}")
         return None
 
-def perform_ocr(image):
-    img = Image.open(image)
-    text = pytesseract.image_to_string(img)
-    return text
-
-def clean_items(raw_text):
-    prompt = f"""
-    Here is the text from a receipt:
-    {raw_text}
-    
-    Please extract the item names, quantities, and convert them to common names. Return the quantities, item names, and prices in the format: "quantity x item_name - $price".
+def process_image(image):
     """
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "user", "content": prompt}
-        ],
-        max_tokens=200,
-        temperature=0.5
-    )
-    return response.choices[0].message.content.strip()
+    Perform OCR and clean the extracted text using OpenAI's GPT4o-mini model.
+
+    Args:
+        image (BytesIO): The image file in bytes.
+
+    Returns:
+        str: Cleaned items in the format "quantity x item_name - $price".
+    """
+    try:
+        image_bytes = image.read()
+        encoded_image = base64.b64encode(image_bytes).decode('utf-8')
+
+        prompt = f"""
+        You are an OCR assistant that extracts and cleans text from receipt images.
+        Only respond with the extracted items in the format "quantity x item_name - $price".
+        Extract all text from the following image and format the items as "quantity x item_name - $price":
+        [Image Data: {encoded_image}]
+        """
+
+        response = client.ChatCompletion.create(
+            model="gpt4o-mini",
+            messages=[
+                {"role": "system", "content": "You are an OCR and data extraction assistant."},
+                {"role": "user", "content": prompt},
+            ],
+            max_tokens=500,
+            temperature=0.3,  
+        )
+
+        cleaned_items = response['choices'][0]['message']['content'].strip()
+        return cleaned_items
+
+    except Exception as e:
+        print(f"Error during OCR and cleaning: {e}")
+        return ""
 
 def add_item_to_notion(item_name, price, quantity, database_id, access_token):
     url = "https://api.notion.com/v1/pages"
@@ -165,21 +179,13 @@ def process_receipt():
     
     image = request.files['receipt_image']
     
-    # Step 1: Perform OCR
-    raw_text = perform_ocr(io.BytesIO(image.read()))
-    print(f"OCR Text: {raw_text}")
-    
-    if not raw_text.strip():
-        print("OCR failed to extract any text.")
-        return jsonify({"error": "OCR failed to extract any text."}), 500
-    
-    # Step 2: Clean items using OpenAI GPT
-    cleaned_items = clean_items(raw_text)
+    # Step 1 & 2: Perform OCR and Clean items using OpenAI
+    cleaned_items = process_image(io.BytesIO(image.read()))
     print(f"Cleaned Items: {cleaned_items}")
     
     if not cleaned_items:
-        print("Failed to clean items using OpenAI.")
-        return jsonify({"error": "Failed to clean items using OpenAI."}), 500
+        print("OCR and cleaning failed.")
+        return jsonify({"error": "OCR and cleaning failed."}), 500
     
     # Step 3: Get the OCR Database ID if uploading to Notion
     database_id = None
