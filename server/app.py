@@ -96,7 +96,7 @@ def process_image(image):
                 ],
                 max_tokens=500,
             )
-
+            print(response)
             cleaned_items = response.choices[0].message["content"].strip()
             return cleaned_items
 
