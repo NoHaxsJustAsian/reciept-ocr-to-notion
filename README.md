@@ -5,16 +5,23 @@ It's built using Flask for the backend and React for the frontend.
 
 ## Features
 
-- **OCR (Optical Character Recognition)**: Extract text from receipt images.
+- **OCR (Optical Character Recognition)**: Extract text from receipt images using tesseract.
 - **Notion Integration**: Automatically upload receipt items to a Notion database.
-- **OpenAI GPT Integration**: Cleans and formats extracted text into readable items with prices and quantities.
+- **GPT Integration**: Cleans and formats extracted text into common names.
 - **Frontend**: Built using React with Tailwind CSS for a user-friendly interface.
 
 ## Live Demo
 
-The project is hosted on [recieptocr.com](https://recieptocr.com). If you want to build it yourself by following the steps below.
+The project is hosted on [recieptocr.com](https://recieptocr.com).
 
+## How sync with Notion
 
+1. Click "Authenticate with Notion"
+2. Press "Next"
+3. Select "Use a template provided by the developer"
+4. Press "Authenticate"
+
+If you want to build it yourself by following the steps below.
 ## Prerequisites
 To run this project, you need the following:
 
@@ -24,6 +31,7 @@ To run this project, you need the following:
 - **Flask** for the backend API
 - **React** for the frontend
 - **Pytesseract** for OCR
+- **Tesseract** for Pytesseract
 - **OpenAI API Key** for text processing
 - **Notion API Key** for uploading items to Notion
 
