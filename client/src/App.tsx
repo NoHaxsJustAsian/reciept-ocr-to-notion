@@ -299,7 +299,21 @@ export default function ReceiptOCR() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <pre className="p-4 rounded-md overflow-x-auto">{result}</pre>
+              <div className="space-y-2">
+                {(() => {
+                  try {
+                    const parsedResult = JSON.parse(result);
+                    return parsedResult.map((item: any, index: number) => (
+                      <p key={index}>
+                        <strong>{item.item_name}</strong>: {item.quantity} x $
+                        {item.price.toFixed(2)}
+                      </p>
+                    ));
+                  } catch (error) {
+                    return <p>{result}</p>;
+                  }
+                })()}
+              </div>
             </CardContent>
           </Card>
         )}
