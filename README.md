@@ -14,6 +14,8 @@ It's built using Flask for the backend and React for the frontend.
 
 The project is hosted on [recieptocr.com](https://recieptocr.com).
 
+> **Note:** If the OCR doesn't work, its because I am poor and am hosting the backend on Render... Please just wait 2 minutes and it will work...
+
 ## How sync with Notion
 
 1. Click "Authenticate with Notion"
