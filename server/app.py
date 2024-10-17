@@ -96,9 +96,11 @@ def process_image(image):
                 ],
                 max_tokens=500,
             )
-            print(response)
-            cleaned_items = response.choices[0].message["content"].strip()
-            return cleaned_items
+            ocr_result = response.choices[0].message.content.strip()
+
+            if ocr_result.startswith("```") and ocr_result.endswith("```"):
+                ocr_result = ocr_result[3:-3].strip()
+            return ocr_result
 
     except Exception as e:
         print(f"Error during OCR and cleaning: {e}")
