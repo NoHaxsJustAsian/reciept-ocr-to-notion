@@ -68,38 +68,35 @@ def get_ocr_database_id(access_token):
         return None
 
 def process_image(image):
-    """
-    Perform OCR and clean the extracted text using OpenAI's GPT4o-mini model.
-
-    Args:
-        image (BytesIO): The image file in bytes.
-
-    Returns:
-        str: Cleaned items in the format "quantity x item_name - $price".
-    """
     try:
-        image_bytes = image.read()
-        encoded_image = base64.b64encode(image_bytes).decode('utf-8')
+            image_bytes = image.read()
+            encoded_image = base64.b64encode(image_bytes).decode('utf-8')
 
-        prompt = f"""
-        You are an OCR assistant that extracts and cleans text from receipt images.
-        Only respond with the extracted items in the format "quantity x item_name - $price".
-        Extract all text from the following image and format the items as "quantity x item_name - $price":
-        [Image Data: {encoded_image}]
-        """
+            prompt = f"""
+            You are an OCR assistant that extracts and cleans text from receipt images.
+            Only respond with the extracted items in the format "quantity x item_name - $price".
+            Extract all text from the following image and format the items as "quantity x item_name - $price":
+            [Image Data: {encoded_image}]
+            """
 
-        response = client.ChatCompletion.create(
-            model="gpt4o-mini",
-            messages=[
-                {"role": "system", "content": "You are an OCR and data extraction assistant."},
-                {"role": "user", "content": prompt},
-            ],
-            max_tokens=500,
-            temperature=0.3,  
-        )
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": prompt},
+                            {
+                                "type": "image_url",
+                                "image_url": {"url": f"data:image/png;base64,{encoded_image}"},
+                            },
+                        ],
+                    }
+                ],
+            )
 
-        cleaned_items = response['choices'][0]['message']['content'].strip()
-        return cleaned_items
+            cleaned_items = response['choices'][0]['message']['content'].strip()
+            return cleaned_items
 
     except Exception as e:
         print(f"Error during OCR and cleaning: {e}")
