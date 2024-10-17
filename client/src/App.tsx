@@ -35,9 +35,9 @@ export default function ReceiptOCR() {
   const { theme } = useTheme();
 
   // Define maximum limits
-  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-  const MAX_IMAGE_WIDTH = 2000; // 2000 pixels
-  const MAX_IMAGE_HEIGHT = 2000; // 2000 pixels
+  const MAX_FILE_SIZE = 10 * 1024 * 1024;
+  const MAX_IMAGE_WIDTH = 4000;
+  const MAX_IMAGE_HEIGHT = 4000;
 
   // Handle OAuth callback by extracting the 'auth' and 'token' query parameters
   useEffect(() => {
