@@ -151,7 +151,6 @@ def add_item_to_notion(item_name, price, quantity, database_id, access_token):
 
 @app.route("/process_receipt", methods=["POST"])
 def process_receipt():
-    # Get the 'upload_to_notion' flag
     upload_to_notion_str = request.form.get('upload_to_notion', 'true').lower()
     upload_to_notion = upload_to_notion_str in ['true', '1', 'yes']
     print(f"upload_to_notion: {upload_to_notion}")
@@ -295,4 +294,4 @@ def status():
     return jsonify({"message": "Backend is running"}), 200
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0', debug=True)

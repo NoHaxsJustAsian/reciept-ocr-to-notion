@@ -139,7 +139,7 @@ export default function ReceiptOCR() {
     setLoading(true);
     const formData = new FormData();
     formData.append("receipt_image", image);
-    formData.append("upload_to_notion", String(uploadToNotion)); // Still include this flag
+    formData.append("upload_to_notion", String(uploadToNotion));
 
     const token = localStorage.getItem("notion_token");
 
@@ -149,7 +149,6 @@ export default function ReceiptOCR() {
         method: "POST",
         body: formData,
         headers: {
-          // Only include the Authorization header if uploading to Notion and the user is authenticated
           ...(uploadToNotion && notionAuthenticated && token
             ? { Authorization: `Bearer ${token}` }
             : {}),
