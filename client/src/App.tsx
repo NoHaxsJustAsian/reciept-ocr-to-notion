@@ -250,7 +250,7 @@ export default function ReceiptOCR() {
       await fetch(STATUS_URL);
     } catch (error) {
       console.error("Error initiating server spin-up:", error);
-      toast.error("Failed to initiate server spin-up.", { icon: <Cross2Icon /> });
+      toast.error("Failed to initiate server spin-up, please try again.", { icon: <Cross2Icon /> });
       setIsServerModalOpen(false);
       return;
     }
