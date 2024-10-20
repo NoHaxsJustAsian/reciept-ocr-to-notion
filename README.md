@@ -16,7 +16,13 @@ The project is hosted on [recieptocr.com](https://recieptocr.com).
 
 > **Note:** I know receipt is spelled incorrectly, the domain was cheaper. LOL.
 
-> **Note:** If the OCR doesn't work, its because I am poor and am hosting the backend on Render... Please just wait 2 minutes and it will work...
+> **Note:** If the OCR doesn't work, its because I am poor and am hosting the backend on a free server...
+
+## How to use
+1. If the server is not already running, please press "Start Server" and wait about 2 minutes
+2. If you want to sync with Notion, follow the steps in "How to sync with Notion" below
+3. Upload your image
+4. Press "Process Receipt"
 
 ## How sync with Notion
 
