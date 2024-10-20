@@ -86,13 +86,14 @@
   height: 24px;
 }
 
-.notion-icon-light {
-  filter: invert(0%);
+.svg-theme {
+  filter: invert(0%); /* Light mode */
 }
 
-.notion-icon-dark {
-  filter: invert(100%);
+.dark .svg-theme {
+  filter: invert(100%); /* Inverts the color to white in dark mode */
 }
+
 
 @layer base {
   * {
