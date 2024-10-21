@@ -24,14 +24,6 @@ import {
 } from "@/components/ui/hover-card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress"; // Import Progress component
-import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog"; // Assuming you have a Dialog component
 
 export default function ReceiptOCR() {
   const FLASK_API_URL = "https://reciept-ocr-to-notion.onrender.com";
@@ -48,7 +40,6 @@ export default function ReceiptOCR() {
   const [isServerRunning, setIsServerRunning] = useState<boolean>(false);
   const [loadingServer, setLoadingServer] = useState<boolean>(false);
   const [progress, setProgress] = useState<number>(0);
-  const [isServerModalOpen, setIsServerModalOpen] = useState<boolean>(false);
 
   // Define maximum limits
   const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -242,79 +233,69 @@ export default function ReceiptOCR() {
     // Prevent multiple button presses by checking if already loading or server is running
     if (loadingServer || isServerRunning) return;
 
-    // Open the modal
-    setIsServerModalOpen(true);
+    // Open the progress bar
+    setLoadingServer(true);
 
     // Initiate server spin-up
     try {
       await fetch(STATUS_URL);
     } catch (error) {
       console.error("Error initiating server spin-up:", error);
-      toast.error("Failed to initiate server spin-up, please try again.", { icon: <Cross2Icon /> });
-      setIsServerModalOpen(false);
+      toast.error("Failed to initiate server spin-up, please try again.", {
+        icon: <Cross2Icon />,
+      });
+      setLoadingServer(false);
       return;
     }
 
-    // Wait for a short delay before checking server status
-    setTimeout(async () => {
+    // Start polling
+    const pollInterval = 5000; // 5 seconds
+    const totalDuration = 3 * 60 * 1000; // 3 minutes
+    const startTime = Date.now();
+
+    const interval = setInterval(async () => {
       try {
         const res = await fetch(STATUS_URL);
         const data = await res.json();
         if (data.message === "Backend is running") {
+          clearInterval(interval);
           setIsServerRunning(true);
+          setLoadingServer(false);
+          setProgress(100);
           toast.success("Server is up and running!");
-          setIsServerModalOpen(false);
-        } else {
-          // Server is not running yet, set loading
-          setLoadingServer(true);
-
-          // Start polling
-          const pollInterval = 5000; // 5 seconds
-          const totalDuration = 3 * 60 * 1000; // 3 minutes
-          const startTime = Date.now();
-
-          const interval = setInterval(async () => {
-            try {
-              const res = await fetch(STATUS_URL);
-              const data = await res.json();
-              if (data.message === "Backend is running") {
-                clearInterval(interval);
-                setIsServerRunning(true);
-                setLoadingServer(false);
-                setProgress(100);
-                toast.success("Server is up and running!");
-                setIsServerModalOpen(false);
-              }
-            } catch (error) {
-              console.error("Error checking server status:", error);
-              // Continue polling despite errors
-            }
-
-            // Update progress
-            const elapsed = Date.now() - startTime;
-            const progressPercentage = Math.min((elapsed / totalDuration) * 100, 100);
-            setProgress(progressPercentage);
-
-            // Stop polling after 3 minutes
-            if (elapsed >= totalDuration) {
-              clearInterval(interval);
-              setLoadingServer(false);
-              toast.error("Server spin-up timed out.", { icon: <Cross2Icon /> });
-              setIsServerModalOpen(false);
-            }
-          }, pollInterval);
         }
       } catch (error) {
         console.error("Error checking server status:", error);
-        toast.error("Failed to check server status.", { icon: <Cross2Icon /> });
-        setIsServerModalOpen(false);
+        // Continue polling despite errors
       }
-    }, 1000); // 1 second delay before showing spinner
+
+      // Update progress
+      const elapsed = Date.now() - startTime;
+      const progressPercentage = Math.min((elapsed / totalDuration) * 100, 100);
+      setProgress(progressPercentage);
+
+      // Stop polling after 3 minutes
+      if (elapsed >= totalDuration) {
+        clearInterval(interval);
+        setLoadingServer(false);
+        toast.error("Server spin-up timed out.", { icon: <Cross2Icon /> });
+      }
+    }, pollInterval);
   };
 
   return (
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
       <div className="flex flex-col items-center justify-center min-h-screen p-4 relative">
+        {/* Progress Bar at the Top */}
+        {loadingServer && (
+          <div className="w-full fixed top-0 left-0">
+            <Progress value={progress} className="w-full" />
+            <p className="text-sm text-center mt-2 bg-white py-2">
+              Spinning up server...
+            </p>
+          </div>
+        )}
+
         {/* Top Right Controls */}
         <div className="absolute top-4 right-4 flex items-center space-x-4">
           {/* Server Status Badge */}
@@ -328,11 +309,11 @@ export default function ReceiptOCR() {
           >
             {isServerRunning ? (
               <>
-                <CheckIcon className="inline mr-1" /> Server Running
+                <CheckIcon className="inline mr-1" /> Server Status
               </>
             ) : (
               <>
-                <Cross2Icon className="inline mr-1" /> Server Not Running
+                <Cross2Icon className="inline mr-1" /> Server Status
               </>
             )}
           </Badge>
@@ -348,11 +329,11 @@ export default function ReceiptOCR() {
           >
             {notionAuthenticated ? (
               <>
-                <CheckIcon className="inline mr-1" /> Notion Authenticated
+                <CheckIcon className="inline mr-1" /> Notion
               </>
             ) : (
               <>
-                <Cross2Icon className="inline mr-1" /> Notion Not Authenticated
+                <Cross2Icon className="inline mr-1" /> Notion
               </>
             )}
           </Badge>
@@ -368,6 +349,26 @@ export default function ReceiptOCR() {
           <ModeToggle />
         </div>
 
+        {/* Server Spin-Up Button in Top-Left Corner */}
+        {!isServerRunning && (
+          <div className="absolute top-4 left-4">
+            <Button
+              variant="outline"
+              onClick={startAndCheckServerStatus}
+              className="flex items-center space-x-2"
+            >
+              {loadingServer ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Spinning up server...
+                </>
+              ) : (
+                <span>Start Server</span>
+              )}
+            </Button>
+          </div>
+        )}
+
         {/* Logos */}
         <div className="flex space-x-4 items-center justify-center mb-4">
           <img
@@ -381,52 +382,6 @@ export default function ReceiptOCR() {
             className="h-12 w-12 svg-theme"
           />
         </div>
-
-        {/* Server Spin-Up Button in Top-Left Corner */}
-        {!isServerRunning && (
-          <div className="absolute top-4 left-4">
-            {/* Button to open the Server Spin-Up Modal */}
-            <Dialog open={isServerModalOpen} onOpenChange={setIsServerModalOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="flex items-center space-x-2">
-                  <span>Start Server</span>
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Start Backend Server</DialogTitle>
-                  <DialogDescription>
-                    This application runs on a free backend service. The server may take some time to start up. Please initiate the server spin-up below.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 mt-4">
-                  <Button
-                    onClick={startAndCheckServerStatus}
-                    disabled={loadingServer || isServerRunning}
-                    className="w-full flex items-center justify-center"
-                  >
-                    {loadingServer ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Spinning up server...
-                      </>
-                    ) : (
-                      "Spin Up Server"
-                    )}
-                  </Button>
-
-                  {/* Progress Bar */}
-                  {loadingServer && (
-                    <div className="w-full">
-                      <Progress value={progress} className="w-full" />
-                      <p className="text-sm text-center mt-2">Spinning up server...</p>
-                    </div>
-                  )}
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-        )}
 
         {/* Main Receipt OCR Card */}
         <Card className="w-full max-w-md">
