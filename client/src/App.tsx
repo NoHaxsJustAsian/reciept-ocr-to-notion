@@ -23,8 +23,6 @@ import {
   HoverCardContent,
 } from "@/components/ui/hover-card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Progress } from "@/components/ui/progress"; // Import Progress component
-
 export default function ReceiptOCR() {
   const FLASK_API_URL = "https://reciept-ocr-to-notion.onrender.com";
   const STATUS_URL = `${FLASK_API_URL}/status`;
@@ -39,7 +37,6 @@ export default function ReceiptOCR() {
   // New state variables for server spin-up
   const [isServerRunning, setIsServerRunning] = useState<boolean>(false);
   const [loadingServer, setLoadingServer] = useState<boolean>(false);
-  const [progress, setProgress] = useState<number>(0);
 
   // Define maximum limits
   const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -261,7 +258,6 @@ export default function ReceiptOCR() {
           clearInterval(interval);
           setIsServerRunning(true);
           setLoadingServer(false);
-          setProgress(100);
           toast.success("Server is up and running!");
         }
       } catch (error) {
@@ -271,8 +267,6 @@ export default function ReceiptOCR() {
 
       // Update progress
       const elapsed = Date.now() - startTime;
-      const progressPercentage = Math.min((elapsed / totalDuration) * 100, 100);
-      setProgress(progressPercentage);
 
       // Stop polling after 3 minutes
       if (elapsed >= totalDuration) {
@@ -286,16 +280,6 @@ export default function ReceiptOCR() {
   return (
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
       <div className="flex flex-col items-center justify-center min-h-screen p-4 relative">
-        {/* Progress Bar at the Top */}
-        {loadingServer && (
-          <div className="w-full fixed top-0 left-0">
-            <Progress value={progress} className="w-full" />
-            <p className="text-sm text-center mt-2 bg-white py-2">
-              Spinning up server...
-            </p>
-          </div>
-        )}
-
         {/* Top Right Controls */}
         <div className="absolute top-4 right-4 flex items-center space-x-4">
           {/* Server Status Badge */}
