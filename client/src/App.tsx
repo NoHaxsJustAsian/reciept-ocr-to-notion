@@ -278,7 +278,7 @@ export default function ReceiptOCR() {
   };
 
   return (
-    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+    <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
       <div className="flex flex-col items-center justify-center min-h-screen p-4 relative">
         {/* Top Right Controls */}
         <div className="absolute top-4 right-4 flex items-center space-x-4">
