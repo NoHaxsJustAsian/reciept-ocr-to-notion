@@ -1,9 +1,13 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   CheckIcon,
   Cross2Icon,
@@ -23,11 +27,15 @@ import {
   HoverCardContent,
 } from "@/components/ui/hover-card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useDropzone } from "react-dropzone";
+import { cn } from "@/lib/utils"; // Utility function for class names
+
 export default function ReceiptOCR() {
   const FLASK_API_URL = "https://reciept-ocr-to-notion.onrender.com";
   const STATUS_URL = `${FLASK_API_URL}/status`;
 
   const [image, setImage] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [result, setResult] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [uploadToNotion, setUploadToNotion] = useState<boolean>(false);
@@ -100,58 +108,99 @@ export default function ReceiptOCR() {
         }
       } catch (error) {
         console.error("Error checking initial server status:", error);
-        // Assume server is not running if there's an error
       }
     };
 
     checkInitialServerStatus();
+
+    return () => {
+      // Clean up the preview URL when the component unmounts
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
+  // Handle image upload via Dropzone
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    if (acceptedFiles && acceptedFiles[0]) {
+      const file = acceptedFiles[0];
+      handleImageFile(file);
+    }
   }, []);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
+  // Handle paste event for images
+  const handlePaste = useCallback((event: ClipboardEvent) => {
+    const items = event.clipboardData?.items;
+    if (items) {
+      for (const item of items) {
+        if (item.type.indexOf("image") !== -1) {
+          const file = item.getAsFile();
+          if (file) {
+            handleImageFile(file);
+            event.preventDefault();
+          }
+        }
+      }
+    }
+  }, []);
 
-      // File Size Validation
-      if (file.size > MAX_FILE_SIZE) {
+  useEffect(() => {
+    window.addEventListener("paste", handlePaste as any);
+    return () => {
+      window.removeEventListener("paste", handlePaste as any);
+    };
+  }, [handlePaste]);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      "image/*": [],
+    },
+  });
+
+  const handleImageFile = (file: File) => {
+    // File Size Validation
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error(
+        `Image is too large. Maximum allowed size is ${
+          MAX_FILE_SIZE / (1024 * 1024)
+        }MB.`,
+        {
+          icon: <Cross2Icon />,
+        }
+      );
+      return;
+    }
+
+    // Image Dimension Validation
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      if (img.width > MAX_IMAGE_WIDTH || img.height > MAX_IMAGE_HEIGHT) {
         toast.error(
-          `Image is too large. Maximum allowed size is ${
-            MAX_FILE_SIZE / (1024 * 1024)
-          }MB.`,
+          `Image dimensions are too large. Maximum allowed size is ${MAX_IMAGE_WIDTH}x${MAX_IMAGE_HEIGHT} pixels.`,
           {
             icon: <Cross2Icon />,
           }
         );
-        return; // Exit the function early
-      }
-
-      // Image Dimension Validation
-      const img = new Image();
-      const objectUrl = URL.createObjectURL(file);
-      img.onload = () => {
-        if (img.width > MAX_IMAGE_WIDTH || img.height > MAX_IMAGE_HEIGHT) {
-          toast.error(
-            `Image dimensions are too large. Maximum allowed size is ${MAX_IMAGE_WIDTH}x${MAX_IMAGE_HEIGHT} pixels.`,
-            {
-              icon: <Cross2Icon />,
-            }
-          );
-          URL.revokeObjectURL(objectUrl); // Clean up
-          return;
-        } else {
-          setImage(file);
-          toast.success("Image uploaded successfully.", {
-            icon: <ImageIcon />,
-          });
-        }
-      };
-      img.onerror = () => {
-        toast.error("Invalid image file.", {
-          icon: <Cross2Icon />,
+        URL.revokeObjectURL(objectUrl);
+        return;
+      } else {
+        setImage(file);
+        setPreviewUrl(objectUrl); // Set the preview URL
+        toast.success("Image uploaded successfully.", {
+          icon: <ImageIcon />,
         });
-        URL.revokeObjectURL(objectUrl); // Clean up
-      };
-      img.src = objectUrl;
-    }
+      }
+    };
+    img.onerror = () => {
+      toast.error("Invalid image file.", {
+        icon: <Cross2Icon />,
+      });
+      URL.revokeObjectURL(objectUrl);
+    };
+    img.src = objectUrl;
   };
 
   const processReceipt = async () => {
@@ -165,7 +214,6 @@ export default function ReceiptOCR() {
     const token = localStorage.getItem("notion_token");
 
     try {
-      // Process the receipt without requiring Notion authentication
       const response = await fetch(`${FLASK_API_URL}/process_receipt`, {
         method: "POST",
         body: formData,
@@ -178,13 +226,11 @@ export default function ReceiptOCR() {
 
       const data = await response.json();
       if (response.ok) {
-        // Always show the OCR result
         setResult(JSON.stringify(data.items, null, 2));
         toast.success("Receipt processed successfully.", {
           icon: <CheckIcon />,
         });
 
-        // Only show Notion upload success message if authenticated and uploading to Notion
         if (uploadToNotion && notionAuthenticated) {
           toast.success("Receipt data uploaded to Notion.", {
             icon: (
@@ -227,13 +273,10 @@ export default function ReceiptOCR() {
 
   // Function to start the server and check status
   const startAndCheckServerStatus = async () => {
-    // Prevent multiple button presses by checking if already loading or server is running
     if (loadingServer || isServerRunning) return;
 
-    // Open the progress bar
     setLoadingServer(true);
 
-    // Initiate server spin-up
     try {
       await fetch(STATUS_URL);
     } catch (error) {
@@ -245,7 +288,6 @@ export default function ReceiptOCR() {
       return;
     }
 
-    // Start polling
     const pollInterval = 5000; // 5 seconds
     const totalDuration = 3 * 60 * 1000; // 3 minutes
     const startTime = Date.now();
@@ -262,13 +304,10 @@ export default function ReceiptOCR() {
         }
       } catch (error) {
         console.error("Error checking server status:", error);
-        // Continue polling despite errors
       }
 
-      // Update progress
       const elapsed = Date.now() - startTime;
 
-      // Stop polling after 3 minutes
       if (elapsed >= totalDuration) {
         clearInterval(interval);
         setLoadingServer(false);
@@ -375,16 +414,31 @@ export default function ReceiptOCR() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Image Upload */}
-            <div className="space-y-2">
+            {/* Image Upload using Dropzone */}
+            <div
+              {...getRootProps()}
+              className={cn(
+                "border-2 border-dashed rounded-md p-6 text-center cursor-pointer",
+                isDragActive ? "border-blue-500" : "border-gray-300"
+              )}
+            >
+              <input {...getInputProps()} />
               <Label htmlFor="image-upload">Upload Receipt Image</Label>
-              <Input
-                id="image-upload"
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-              />
+              <p className="mt-2 text-sm text-gray-500">
+                Drag and drop an image here, paste it, or click to select a file
+              </p>
             </div>
+
+            {/* Image Preview */}
+            {previewUrl && (
+              <div className="mt-4">
+                <img
+                  src={previewUrl}
+                  alt="Preview"
+                  className="max-w-full h-auto rounded-md border"
+                />
+              </div>
+            )}
 
             {/* Notion Authentication Section */}
             {notionAuthenticated ? (
@@ -409,7 +463,7 @@ export default function ReceiptOCR() {
             ) : (
               <>
                 <p className="text-sm text-muted-foreground">
-                  To auto populate your Notion, please authenticate with Notion.
+                  To auto-populate your Notion, please authenticate with Notion.
                 </p>
                 <Button onClick={handleNotionAuthentication} className="w-full">
                   Authenticate with Notion
@@ -486,7 +540,7 @@ export default function ReceiptOCR() {
                 <div className="space-y-1">
                   <h4 className="text-sm font-semibold">@nohaxsjustasian</h4>
                   <p className="text-sm">
-                    NEU 25' | Searching for new grad SWE positions.
+                    NEU '25 | Searching for new grad SWE positions.
                   </p>
                   <div className="flex items-center pt-2">
                     <CalendarIcon className="mr-2 h-4 w-4 opacity-70" />{" "}
