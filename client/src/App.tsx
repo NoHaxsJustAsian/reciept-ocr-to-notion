@@ -2,18 +2,15 @@ import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   CheckIcon,
   Cross2Icon,
   ImageIcon,
   UploadIcon,
   CalendarIcon,
+  EnterIcon,
+  RocketIcon,
 } from "@radix-ui/react-icons";
 import { Loader2 } from "lucide-react";
 import { ThemeProvider, useTheme } from "@/components/ui/theme-provider";
@@ -39,7 +36,8 @@ export default function ReceiptOCR() {
   const [result, setResult] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [uploadToNotion, setUploadToNotion] = useState<boolean>(false);
-  const [notionAuthenticated, setNotionAuthenticated] = useState<boolean>(false);
+  const [notionAuthenticated, setNotionAuthenticated] =
+    useState<boolean>(false);
   const { theme } = useTheme();
 
   // New state variables for server spin-up
@@ -65,11 +63,7 @@ export default function ReceiptOCR() {
         setNotionAuthenticated(true);
         toast.success("Authentication with Notion was successful.", {
           icon: (
-            <img
-              src="/notion.svg"
-              alt="Notion"
-              className="h-6 w-6 svg-theme"
-            />
+            <img src="/notion.svg" alt="Notion" className="h-6 w-6 svg-theme" />
           ),
         });
       } else {
@@ -466,7 +460,10 @@ export default function ReceiptOCR() {
                   To auto-populate your Notion, please authenticate with Notion.
                 </p>
                 <Button onClick={handleNotionAuthentication} className="w-full">
-                  Authenticate with Notion
+                  <>
+                    <EnterIcon className="mr-2 h-4 w-4" />
+                    Authenticate with Notion
+                  </>
                 </Button>
               </>
             )}
@@ -483,7 +480,11 @@ export default function ReceiptOCR() {
                   Processing...
                 </>
               ) : (
-                "Process Receipt"
+                <>
+                  <RocketIcon className="mr-2 h-4 w-4" />
+                  Process Reciept
+                </>
+                
               )}
             </Button>
           </CardContent>
@@ -520,7 +521,7 @@ export default function ReceiptOCR() {
         {/* Footer with HoverCard */}
         <p className="absolute bottom-4 left-4 text-xs text-muted-foreground leading-loose">
           Built by{" "}
-          <HoverCard>
+          <HoverCard openDelay={100} closeDelay={100}>
             <HoverCardTrigger asChild>
               <a
                 href="https://github.com/nohaxsjustasian"
