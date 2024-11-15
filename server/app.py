@@ -71,12 +71,16 @@ def get_ocr_database_id(access_token):
 def process_image(image):
     try:
             image_bytes = image.read()
-            img_type = Image.open(io.BytesIO(image_bytes)).format.lower()
-            encoded_image = base64.b64encode(image_bytes).decode('utf-8')
+            img = Image.open(io.BytesIO(image_bytes))
+            img_type = img.format.lower()
+            # Convert to grayscale
+            img_gray = img.convert('L')
+            buffer = io.BytesIO()
+            img_gray.save(buffer, format=img_type)
+            image_bytes = buffer.getvalue()
 
             prompt = f"""
             You are an OCR assistant that extracts and cleans text from receipt images.
-            Make sure the image is in greyscale before OCR.
             Only respond with the extracted items in the format "quantity x item_name - $price".
             Extract all text from the following image and format the items as "quantity x item_name - $price":
             """
