@@ -79,6 +79,7 @@ def process_image(image):
             img_gray.save(buffer, format=img_type)
             image_bytes = buffer.getvalue()
 
+            encoded_image = base64.b64encode(image_bytes).decode("utf-8")
             prompt = f"""
             You are an OCR assistant that extracts and cleans text from receipt images.
             Only respond with the extracted items in the format "quantity x item_name - $price".
